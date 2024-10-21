@@ -1,0 +1,65 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+        IMAGE_NAME: tuanlm15-the-movies
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        AWS_ECR_REPOSITORY: ${{ secrets.AWS_ECR_REPOSITORY }}
+        BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        TAG: latest # Change this to the appropriate tag for the master branch
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check Docker Status
+        run: docker version
+
+      - name: Start Docker Service (if necessary)
+        run: sudo systemctl start docker
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: cd starter/frontend && npm ci
+
+      - name: Lint code
+        run: cd starter/frontend && npm run lint
+
+      - name: Run tests
+        run: cd starter/frontend && npm run test
+
+      - name: Build Docker Image
+        run: |
+            cd starter/frontend
+            sed -i 's/_BACKEND_URL_/$BACKEND_URL/g' .env
+            export REACT_APP_MOVIE_API_URL=$BACKEND_URL
+            docker build -t $IMAGE_NAME .
+
+      - name: Login to AWS ECR
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+      - name: Authenticate Docker to AWS ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      - name: Tag the image
+        run: docker tag $IMAGE_NAME:$TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$AWS_ECR_REPOSITORY:$TAG
+
+      - name: Push the image to ECR
+        run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$AWS_ECR_REPOSITORY:$TAG
