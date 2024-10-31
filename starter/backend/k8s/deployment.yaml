@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: backend
-          image: backend
+          image: 459632193382.dkr.ecr.us-east-1.amazonaws.com/tuanlm15/udacity-devops-project4-be:latest
           ports:
             - containerPort: 5000
