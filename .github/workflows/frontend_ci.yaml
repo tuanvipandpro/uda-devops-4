@@ -50,6 +50,8 @@ jobs:
   build:
     needs: [lint, test]
     runs-on: ubuntu-latest
+    env:
+        IMAGE_NAME: tuanlm15-the-movies
     steps:
       - uses: actions/checkout@v3
 
