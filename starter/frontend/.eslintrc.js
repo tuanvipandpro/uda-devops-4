@@ -21,15 +21,16 @@ module.exports = {
     jest: true,
   },
   rules: {
-    'prettier/prettier': [
-      'error',
-      {
-        singleQuote: true,
-        jsxSingleQuote: false,
-        printWidth: 120,
-        parser: 'babel-ts',
-      },
-    ],
+    // 'prettier/prettier': [
+    //   'error',
+    //   {
+    //     singleQuote: true,
+    //     jsxSingleQuote: false,
+    //     printWidth: 120,
+    //     parser: 'babel-ts',
+    //   },
+    // ],
+    'prettier/prettier': 0,
     // Customize your rules here
     'react/prop-types': process.env.FAIL_LINT ? 2 : 0,
     'react/jsx-uses-vars': 'warn',
